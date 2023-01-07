@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Api Automation Report</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.0.0/dist/index.css">
+</head>
+<style >
+    .el-table .warning-row {
+      --el-table-tr-bg-color: yellow;
+    }
+    .el-table .success-row {
+      --el-table-tr-bg-color: rowIndex;
+    }
+    [v-cloak] {
+      display: none;
+    }
+
+</style>
+<body>
+  <div id="wrapper">
+    <!--  -->
+    <div v-cloak>
+      <div>{{ state.message }}</div>
+      <div>{{ state.count }}</div>
+      <div>{{ page }}</div>
+      <div>{{ name.name }}</div>
+    </div>
+
+      <el-button type="warning" @click="handleIncrease">add</el-button>
+
+      <reporter_table></reporter_table>
+
+      <button-counter :data_="mydata" @data-changed="showprops"></button-counter>
+      <mymac  :data_="mydata"  @name-changed="showprops"> </mymac>
+
+  </div>
+    <!-- import Vue -->
+    <script src="https://unpkg.com/vue@3.2.22/dist/vue.global.js"></script>
+    <!-- import element-ui -->
+    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.0.0/dist/index.full.min.js"></script>
+    <!-- 引入axios库 -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- icons 图标 -->
+    <script src="https://unpkg.com/@element-plus/icons-vue@1.1.4/dist/index.iife.min.js"></script>
+</body>
+<script>
+    const { createApp, reactive, toRefs, watch , nextTick, ref,getCurrentInstance} = Vue;
+       let reporter_table = {
+            setup(){
+                const tableRowClassName = (rows_data) => {
+                  console.log("===>",rows_data.rowIndex,rows_data.row.date)
+                  if (rows_data.rowIndex === 1) {
+                    return 'warning-row'
+                  } else if (rows_data.rowIndex === 3) {
+                    return 'success-row'
+                  }
+                  return ''
+                }
+                const tableData = ref([
+                      {
+                        date: '2016-05-03',
+                        name: 'Tom',
+                        address: 'No. 189, Grove St, Los Angeles',
+                      },
+                      {
+                        date: '2016-05-02',
+                        name: 'Tom',
+                        address: 'No. 189, Grove St, Los Angeles',
+                      },
+                      {
+                        date: '2016-05-04',
+                        name: 'Tom',
+                        address: 'No. 189, Grove St, Los Angeles',
+                      },
+                      {
+                        date: '2016-05-01',
+                        name: 'Tom',
+                        address: 'No. 189, Grove St, Los Angeles',
+                      },
+                ])
+                return {
+                  tableData,
+                  tableRowClassName
+                }
+            },
+            template: `
+                  <el-table
+                    :data="tableData"
+                    style="width: 100%"
+                    :row-class-name="tableRowClassName"
+                  >
+                    <el-table-column prop="date" label="Date" width="180" />
+                    <el-table-column prop="name" label="Name" width="180" />
+                    <el-table-column prop="address" label="Address"  />
+                  </el-table>
+                `
+       }
+       let mymac = {
+            props:['data_'],
+            emits: ["name-changed"],
+            //注册子组件
+            components:{
+
+            },
+            setup(props,{ emit }){
+                //接收父组件传递过来的数据
+                let propContent = ref(props.data_);
+               //触发父组件方法
+                const plusOne = () => {
+                     console.log("子组件触发props")
+                     emit('name-changed','我是子组件传递到父组件的数据')
+                }
+                //必须返回 模板中才能使用
+                let count = ref(0)
+                return {
+                  count,
+                  plusOne,
+                  propContent
+                }
+            },
+            template: `
+                <el-button type="info" @click="count++">
+                  点了 {{ count }}  次！
+                </el-button>
+                <br>
+                <button-counter :data_="public" @data-changed="showprops"></button-counter>
+                <span @click="plusOne">父组件传递的值: {{ propContent }}</span>
+                `
+      }
+
+    const App = {
+        components: {
+            //注册子组件
+            mymac,
+            reporter_table
+        },
+        setup() {
+            const test = ref(null);
+            const restaurants = Vue.ref([
+                { value: 'vue', link: 'https://github.com/vuejs/vue' },
+                { value: 'element', link: 'https://github.com/ElemeFE/element' },
+                { value: 'cooking', link: 'https://github.com/ElemeFE/cooking' },
+                { value: 'mint-ui', link: 'https://github.com/ElemeFE/mint-ui' },
+                { value: 'vuex', link: 'https://github.com/vuejs/vuex' },
+                { value: 'vue-router', link: 'https://github.com/vuejs/vue-router' },
+                { value: 'babel', link: 'https://github.com/babel/babel' },
+              ])
+            const createFilter = (queryString) => {
+            return (restaurant) => {
+                return (
+                  restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
+                )
+            }
+        }
+        const uploadfiles = Vue.ref("")
+        const page = Vue.ref(0) // {value: 0}
+        const name = reactive({
+                        name : "jack"
+        })
+        //监控变量
+        watch(
+            uploadfiles,(newValue, oldValue)=> {
+                if (newValue === null) {
+                    console.log('test', test)
+                    test.value = {}
+                }
+            }
+        )
+        const state = Vue.reactive({
+            count: 0,
+            message: 'You loaded this page on ' + new Date().toLocaleString()
+        })
+        const handleIncrease = () => {
+            state.count++
+            page.value++
+        }
+        // 异步请求 引入axios
+        const getUsers = async (url) => {
+            try {
+             const json = await axios.get(url);
+             console.log(json)
+            } catch (e) {
+             console.log(e)
+            }
+        }
+        const change = () => {
+            alert('changeUsers!')
+        }
+        const blur = ()=>{
+            alert('blur!')
+        }
+        const numberchange= (current_val, old_val) => {
+            console.log(current_val, old_val)
+        }
+        Vue.onMounted(() => {
+            document.getElementById('wrapper').style.display = 'block'
+            console.log('onMounted')
+            console.log('testvalue',test.value)
+        })
+        return {
+                test,
+                numberchange,
+                change,
+                blur,
+                page,
+                state,
+                name,
+                handleIncrease
+            }
+        }
+    }
+    const app = Vue.createApp(App)
+    // VUE使用双括号表示变量，DJango也是因此会冲突，需要配置vue3的delimiters
+    // app.config.compilerOptions.delimiters = ['{[', ']}']
+    // 定义一个全局组件
+    app.component('button-counter',
+      {
+            props:['data_'],
+            emits:['data-changed'],
+            //注册子组件
+            components:{
+
+             },
+            setup(props,context){
+                const val = ref(0)
+                //接收父组件传递过来的数据
+                let propContent = ref(props.data_);
+                //触发父组件方法
+                const testchange = () => {
+                     console.log("子组件触发props")
+                     context.emit('data-changed','我是全局子组件传递到父组件的数据')
+                }
+                return {
+                    testchange,
+                    propContent,
+                    val,
+                }
+            },
+            template: `
+            <span>全局组件</span>
+            <el-button @click="val++" >
+              点了 {{ val }}  次！
+            </el-button><el-button @click="testchange" >触发全局组件的emits</el-button>`
+    })
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+        app.component(key, component)
+    }
+    app.use(ElementPlus).mount("#wrapper")
+
+  </script>
+</html>
